@@ -7,6 +7,8 @@ version = "0.5.0"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SparseMatricesCOO = "fa32481b-f100-4b48-8dc8-c62f61b13870"
+SparseMatricesCSR = "a0a7dd2c-ebf4-11e9-1f05-cf50bc540ca1"
 TranscodingStreams = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 
 [compat]

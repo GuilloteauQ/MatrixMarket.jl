@@ -1,3 +1,7 @@
+using SparseMatricesCSR
+using SparseMatricesCOO
+using SparseArrays
+
 """
     mmread(filename, infoonly=false, retcoord=false)
 
@@ -13,20 +17,20 @@ sparse storage), or `array` (dense array storage).
 - `retcoord::Bool`: If it is `true`, the rows, column and value vectors are returned along
     with the header information.
 """
-function mmread(filename::String, infoonly::Bool=false, retcoord::Bool=false)
+function mmread(filename::String, repr::Symbol=:csc, infoonly::Bool=false, retcoord::Bool=false)
     stream = open(filename, "r")
 
     if endswith(filename, ".gz")
         stream = TranscodingStream(GzipDecompressor(), stream)
     end
 
-    result = infoonly ? mminfo(stream) : mmread(stream, retcoord)
+    result = infoonly ? mminfo(stream) : mmread(stream, repr , retcoord)
     close(stream)
 
     return result
 end
 
-function mmread(stream::IO, infoonly::Bool=false, retcoord::Bool=false)
+function mmread(stream::IO, repr::Symbol=:csc, infoonly::Bool=false, retcoord::Bool=false)
     rows, cols, entries, rep, field, symm = mminfo(stream)
 
     infoonly && return rows, cols, entries, rep, field, symm
@@ -46,8 +50,22 @@ function mmread(stream::IO, infoonly::Bool=false, retcoord::Bool=false)
             vals[i] = parse_val(line, splits, T)
         end
 
-        result = retcoord ? (rn, cn, vals, rows, cols, entries, rep, field, symm) :
-                            symfunc(sparse(rn, cn, vals, rows, cols))
+        if retcoord
+          result = (rn, cn, vals, rows, cols, entries, rep, field, symm)
+        else
+          if repr == :csc
+            sparse_f = sparse
+          elseif repr == :csr
+            sparse_f = sparsecsr
+          elseif repr == :coo
+            sparse_f = (m, n, vals, rows, cols) -> SparseMatrixCOO(rows, cols, m, n, vals)
+          else
+            throw("Unknown representation `$(repr)`")
+          end
+          result = symfunc(sparse_f(rn, cn, vals, rows, cols))
+        end
+        #result = retcoord ? (rn, cn, vals, rows, cols, entries, rep, field, symm) :
+        #                    symfunc(sparse(rn, cn, vals, rows, cols))
     else
         vals = [parse(Float64, readline(stream)) for _ in 1:entries]
         A = reshape(vals, rows, cols)
